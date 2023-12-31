@@ -8,7 +8,7 @@ function AudioFile(props) {
   function handleBtnAction() {
     const newState = btnAction === 'Play' ? 'Stop' : 'Play';
     setBtnAction(newState)
-    const audio = new Howl({src: ['../../../../audioUploads/' + props.fileName]})
+    const audio = new Howl({src: ['../../../../audioUploads/' + props.fileName], volume: 0.8})
     console.log(audio)
     audio.play()
   }
@@ -17,7 +17,7 @@ function AudioFile(props) {
   return (
     <div className='audio-file'>
       <h2>{props.fileName}</h2>
-      <button onClick={handleBtnAction}>{btnAction}</button>
+      <button onClick={handleBtnAction} type='button'>{btnAction}</button>
     </div>
   )
 }
