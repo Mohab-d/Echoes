@@ -1,19 +1,28 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Howl, Howler } from 'howler';
-
 
 function AudioFile(props) {
   const [btnAction, setBtnAction] = useState('Play');
+  const [sound, setSound] = useState();
+
+  useEffect(() => {
+    const sound = new Howl({ src: [props.filePath] });
+    sound.once('load', () => {
+      setSound(sound);
+    })
+  }, [])
 
   function handleBtnAction() {
     const newState = btnAction === 'Play' ? 'Stop' : 'Play';
-    setBtnAction(newState)
-    const audio = new Howl({src: ['../../../../audioUploads/' + props.fileName], volume: 0.8})
-    console.log(audio)
-    audio.play()
+    setBtnAction(newState);
+    if (sound) {
+      if (btnAction === 'Play') {
+        sound.play();
+      } else {
+        sound.stop();
+      }
+    }
   }
-
-
   return (
     <div className='audio-file'>
       <h2>{props.fileName}</h2>

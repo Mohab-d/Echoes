@@ -29,7 +29,8 @@ function Home() {
 			<div>Here are all your uploads:</div>
 			<ul>
 				{uploadedAudioFiles &&  uploadedAudioFiles.map((file, index) => {
-					return <li key={index} id={index}><AudioFile fileName={file} /></li>
+					console.log(file.path)
+					return <li key={index} id={index}><AudioFile fileName={file.name} filePath={file.path}/></li>
 				})}
 			</ul>
 		</div>
