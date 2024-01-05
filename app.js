@@ -5,13 +5,12 @@ import multer from "multer";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 import pg from "pg";
-
+import * as db_helpers from "./helpers/db_helpers.js";
 
 // Constants
 const app = express();
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const port = process.env.PORT;
-const uploadedAudioFiles = [] // Uploaded audio files names
 const uploadDest = multer({ // Multer storage config 
 	storage: multer.diskStorage({
 		destination: (req, file, f) => {
@@ -24,11 +23,11 @@ const uploadDest = multer({ // Multer storage config
 	})
 })
 const db = new pg.Client({ // Database config
-  user: process.env.DB_USERNAME,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
+	user: process.env.DB_USERNAME,
+	host: process.env.DB_HOST,
+	database: process.env.DB_NAME,
+	password: process.env.DB_PASSWORD,
+	port: process.env.DB_PORT,
 })
 db.connect(); // Connect Database
 
@@ -36,22 +35,30 @@ db.connect(); // Connect Database
 app.use(bodyParser.urlencoded({ extended: true }))
 
 // Routes
-app.get('/recordings', (req, res) => { // Send audio files names array
-	res.json(uploadedAudioFiles)
+app.get('/recordings', async (req, res) => { // Send audio files names array
+	try {
+		const uploadedFiles = await db_helpers.fetchAllUploadedAudioFiles(db);
+		console.log(uploadedFiles.rows)
+		res.json(uploadedFiles)
+	} catch (err) {
+		console.log(err)
+		res.status(500).json({ error: 'Failed to retrieve audio files' })
+	}
 })
 
 
-app.post('/upload', uploadDest.single('audioFile'), (req, res) => { // Upload selected audio files
-	if(!req.file) {
-		res.send('No file is selected')
+app.post('/upload', uploadDest.array('audioFiles', 10), (req, res) => { // Upload selected audio files
+	console.log(req.files)
+	if (!req.files) {
+		res.status(500).json({ error: 'No files were selected' })
 	}
-	const newAudioFile = {
-		name: req.file.filename,
-		path: 	'/audioUploads/' + req.file.filename
+
+	const result = db_helpers.uploadAudioFiles(db, req.files)
+	if (result !== 1) {
+		res.redirect('/')
+	} else {
+		res.status(500).json({ error: 'Unknown error occured while saving files' })
 	}
-	console.log(newAudioFile.path)
-	uploadedAudioFiles.push(newAudioFile)
-	res.redirect('/')
 })
 
 app.listen(port, () => { // Start app and listen to port

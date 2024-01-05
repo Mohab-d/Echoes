@@ -3,19 +3,19 @@ import axios from 'axios';
 import AudioFile from './general/AudioFile';
 
 function Home() {
-	const [message, setMessage] = useState('');
-	const [uploadedAudioFiles, setUploadedAudioFiles] = useState([]);
+	const [uploadedAudioFiles, setUploadedAudioFiles] = useState();
 
-	async function fetchData() {
-		try {
-			const response = await axios.get('/recordings');
-			setUploadedAudioFiles(response.data);
-		} catch (err) {
-			console.error(err)
-		}
-	}
 	useEffect(() => {
-		fetchData()
+		async function fetchUploadedFiles() {
+			try {
+				const response = await axios.get('/recordings');
+				setUploadedAudioFiles(response.data);
+				console.log(response.data)
+			} catch (err) {
+				console.error(err)
+			}
+		}
+		fetchUploadedFiles();
 	}, [])
 
 
@@ -23,14 +23,14 @@ function Home() {
 		<div>
 			<h1>Hello and wilcom</h1>
 			<form action="/upload" method="post" enctype="multipart/form-data">
-				<input type="file" name="audioFile" accept="audio/*" />
+				<input type="file" name="audioFiles" accept="audio/*" multiple />
 				<button type="submit">Upload</button>
 			</form>
 			<div>Here are all your uploads:</div>
 			<ul>
-				{uploadedAudioFiles &&  uploadedAudioFiles.map((file, index) => {
+				{uploadedAudioFiles && uploadedAudioFiles.map((file, index) => {
 					console.log(file.path)
-					return <li key={index} id={index}><AudioFile fileName={file.name} filePath={file.path}/></li>
+					return <li key={index} id={index}><AudioFile fileName={file.name} filePath={file.path} /></li>
 				})}
 			</ul>
 		</div>
