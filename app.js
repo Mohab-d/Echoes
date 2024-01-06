@@ -13,12 +13,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const port = process.env.PORT;
 const uploadDest = multer({ // Multer storage config 
 	storage: multer.diskStorage({
-		destination: (req, file, f) => {
+		destination: (req, file, fn) => {
 			console.log(file)
-			f(null, __dirname + '/echoes/public/audioUploads')
+			fn(null, __dirname + '/echoes/public/audioUploads')
 		},
-		filename: (req, file, f) => {
-			f(null, Date.now() + path.extname(file.originalname))
+		filename: (req, file, fn) => {
+			fn(null, Date.now() + path.extname(file.originalname))
 		}
 	})
 })
@@ -33,31 +33,48 @@ db.connect(); // Connect Database
 
 // Middlewares
 app.use(bodyParser.urlencoded({ extended: true }))
+app.use(express.json());
 
 // Routes
-app.get('/recordings', async (req, res) => { // Send audio files names array
+// Send audio files names array
+app.get('/recordings', async (req, res) => { 
 	try {
 		const uploadedFiles = await db_helpers.fetchAllUploadedAudioFiles(db);
 		console.log(uploadedFiles.rows)
 		res.json(uploadedFiles)
 	} catch (err) {
-		console.log(err)
+		console.error(err)
 		res.status(500).json({ error: 'Failed to retrieve audio files' })
 	}
 })
 
 
-app.post('/upload', uploadDest.array('audioFiles', 10), (req, res) => { // Upload selected audio files
+// Upload selected audio files
+app.post('/upload', uploadDest.array('audioFiles', 10), (req, res) => { 
 	console.log(req.files)
-	if (!req.files) {
+	if (!req.files) { // Error when no files are selected
 		res.status(500).json({ error: 'No files were selected' })
 	}
 
-	const result = db_helpers.uploadAudioFiles(db, req.files)
-	if (result !== 1) {
+	try {
+		db_helpers.uploadAudioFiles(db, req.files)
 		res.redirect('/')
-	} else {
-		res.status(500).json({ error: 'Unknown error occured while saving files' })
+	} catch (err) {
+		res.status(500).json({ error: err})
+		console.log(err)
+	}
+
+})
+
+
+// Delete selected audio files
+app.post('/recordings/delete', (req, res) => {
+	try {
+		db_helpers.deleteSelectedFiles(db, req.body.selectedFiles)
+		res.redirect('/')
+	} catch(err) {
+		res.status(500).json({error: err})
+		console.error(err)
 	}
 })
 

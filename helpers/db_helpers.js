@@ -1,3 +1,6 @@
+import path from 'path'
+
+
 // Get all uploaded files
 async function fetchAllUploadedAudioFiles(db) {
   try {
@@ -5,14 +8,15 @@ async function fetchAllUploadedAudioFiles(db) {
     let allUploadedAudioFiles = []
     data.rows.forEach((audioFile) => {
       allUploadedAudioFiles.push({
+        id: audioFile.id,
         name: audioFile.file_name,
         path: audioFile.file_path
       })
     })
     return allUploadedAudioFiles;
   } catch (err) {
-    console.log(err)
-    return 1;
+    console.error(err)
+    throw new Error("Could not fetch data from the database")
   }
 }
 
@@ -24,15 +28,24 @@ function uploadAudioFiles(db, audioFiles) {
         "INSERT INTO uploaded_file (file_name, file_type, file_path) VALUES ($1, $2, $3)",
         [
           audioFile.filename,
-          audioFile.mimetype,
+          path.extname(audioFile.filename),
           'audioUploads/' + audioFile.filename
         ])
     })
-    return 0;
   } catch (err) {
     console.log(err)
-    return 1;
+    throw new Error("Could not store uploaded files to the database")
   }
 }
 
-export { fetchAllUploadedAudioFiles, uploadAudioFiles }
+function deleteSelectedFiles(db, selectedFilesIds) {
+  try {
+    selectedFilesIds.forEach(async (fileId) => {
+      await db.query("DELETE FROM uploaded_file where id = $1", [fileId])
+    })
+  } catch(err) {
+    throw new Error("Could not delete selected files")
+  }
+}
+
+export { fetchAllUploadedAudioFiles, uploadAudioFiles , deleteSelectedFiles}
