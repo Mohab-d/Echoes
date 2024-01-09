@@ -37,11 +37,14 @@ app.use(express.json());
 
 // Routes
 // Send audio files names array
-app.get('/recordings', async (req, res) => { 
+app.get('/recordings', async (req, res) => {
 	try {
 		const uploadedFiles = await db_helpers.fetchAllUploadedAudioFiles(db);
-		console.log(uploadedFiles.rows)
-		res.json(uploadedFiles)
+		if (uploadedFiles) {
+			res.status(200).json(uploadedFiles)
+		} else {
+			res.status(200).json({ message: 'Upload files to start' })
+		}
 	} catch (err) {
 		console.error(err)
 		res.status(500).json({ error: 'Failed to retrieve audio files' })
@@ -50,8 +53,7 @@ app.get('/recordings', async (req, res) => {
 
 
 // Upload selected audio files
-app.post('/upload', uploadDest.array('audioFiles', 10), (req, res) => { 
-	console.log(req.files)
+app.post('/upload', uploadDest.array('audioFiles', 10), (req, res) => {
 	if (!req.files) { // Error when no files are selected
 		res.status(500).json({ error: 'No files were selected' })
 	}
@@ -60,7 +62,7 @@ app.post('/upload', uploadDest.array('audioFiles', 10), (req, res) => {
 		db_helpers.uploadAudioFiles(db, req.files)
 		res.redirect('/')
 	} catch (err) {
-		res.status(500).json({ error: err})
+		res.status(500).json({ error: err })
 		console.log(err)
 	}
 
@@ -71,9 +73,9 @@ app.post('/upload', uploadDest.array('audioFiles', 10), (req, res) => {
 app.post('/recordings/delete', (req, res) => {
 	try {
 		db_helpers.deleteSelectedFiles(db, req.body.selectedFiles)
-		res.redirect('/')
-	} catch(err) {
-		res.status(500).json({error: err})
+		res.status(200).json({ message: 'Files deleted successfully' })
+	} catch (err) {
+		res.status(500).json({ error: err })
 		console.error(err)
 	}
 })

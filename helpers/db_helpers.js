@@ -10,9 +10,14 @@ async function fetchAllUploadedAudioFiles(db) {
       allUploadedAudioFiles.push({
         id: audioFile.id,
         name: audioFile.file_name,
-        path: audioFile.file_path
+        path: audioFile.file_path,
+        uploadDate: new Date(audioFile.upload_date).toLocaleString('en-US'),
       })
     })
+    const a = new Date(allUploadedAudioFiles[0].uploadDate).toLocaleString('en-US', {
+      timeZone: 'eet'
+    })
+    console.log(' hee: ' + a)
     return allUploadedAudioFiles;
   } catch (err) {
     console.error(err)
@@ -23,13 +28,15 @@ async function fetchAllUploadedAudioFiles(db) {
 // Upload a file
 function uploadAudioFiles(db, audioFiles) {
   try {
+    const uploadTimestamp = new Date().toISOString();
     audioFiles.forEach(async audioFile => {
       await db.query(
-        "INSERT INTO uploaded_file (file_name, file_type, file_path) VALUES ($1, $2, $3)",
+        "INSERT INTO uploaded_file (file_name, file_type, file_path, upload_date) VALUES ($1, $2, $3, $4)",
         [
           audioFile.filename,
           path.extname(audioFile.filename),
-          'audioUploads/' + audioFile.filename
+          'audioUploads/' + audioFile.filename,
+          uploadTimestamp
         ])
     })
   } catch (err) {

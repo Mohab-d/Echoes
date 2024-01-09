@@ -27,6 +27,7 @@ function AudioFile(props) {
     <div className='audio-file'>
       <h2>{props.fileName}</h2>
       <audio controls src={props.filePath}></audio>
+      <p>{'date: ' + props.uploadDate + ' time: ' + props.uploadTime}</p>
       {/* <button onClick={handleBtnAction} type='button'>{btnAction}</button> */}
     </div>
   )

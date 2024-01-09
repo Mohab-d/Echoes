@@ -6,22 +6,29 @@ function Home() {
 	const [uploadedAudioFiles, setUploadedAudioFiles] = useState();
 	const [selectedFiles, setSelectedFiles] = useState([]);
 
-	useEffect(() => {
-		async function fetchUploadedFiles() {
-			try {
-				const response = await axios.get('/recordings');
-				setUploadedAudioFiles(response.data);
-			} catch (err) {
-				console.error(err)
-			}
+	// Get all uploaded files
+	async function fetchUploadedFiles() {
+		try {
+			const response = await axios.get('/recordings');
+			setUploadedAudioFiles(response.data);
+		} catch (err) {
+			console.error(err)
 		}
+	}
+
+	// Effects
+	// Get all uploaded files
+	useEffect(() => {
 		fetchUploadedFiles();
 	}, [])
 
 
 	async function handleDeleteSelected() {
 		try {
-			await axios.post('/recordings/delete', {selectedFiles: selectedFiles})
+			const response = await axios.post('/recordings/delete', { selectedFiles: selectedFiles })
+			if (response.status === 200) {
+				fetchUploadedFiles();
+			}
 		} catch (err) {
 			console.error(err)
 		}
@@ -53,7 +60,7 @@ function Home() {
 				{uploadedAudioFiles && uploadedAudioFiles.map((file, index) => {
 					return <li key={index} id={file.id}>
 						<input type='checkbox' onClick={selectFile}></input>
-						<AudioFile fileName={file.name} filePath={file.path} />
+						<AudioFile fileName={file.name} filePath={file.path} uploadDate={file.uploadDate} uploadTime={file.uploadTime}/>
 					</li>
 				})}
 			</ul>
